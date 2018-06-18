@@ -170,11 +170,21 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 		- [ ] Add an `inject` directive for `SignInManager<ApplicationUser>` with the name `SignInManager` after the `using` directives
 		- [ ] Check if the user is signed in using the injected `SignInManager`'s `IsSignedIn` method (provide `User` as the arguement)
 			- If `IsSignedIn` returns `true` provide the following HTML
-				`<a asp-action="Logout" asp-controller="Account">Logout</a>`
+				```
+					<div>
+						<form asp-action="Logout" asp-controller="Account" method="post">
+							<button type="submit">Logout</button>
+						</form>
+					</div>
+				```
 			- If `IsSignedIn` returns `false` provide the following HTML
 				```
-					<a asp-action="Register" asp-controller="Account" >Register</a><br/>
-					<a asp-action="Login" asp-controller="Account" >Log in</a>
+					<div>
+						<a asp-action="Register" asp-controller="Account" >Register</a>
+					</div>
+					<div>
+						<a asp-action="Login" asp-controller="Account" >Log in</a>
+					</div>
 				```
 	- [ ] Create Relationship Between Item and ApplicationUser Models
 		- [ ] Add a `virtual` property of type `ApplicationUser` named `User` to the `Item` model
