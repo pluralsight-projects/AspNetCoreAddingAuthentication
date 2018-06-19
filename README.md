@@ -73,17 +73,14 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 					<div class="text-danger"></div>
 					<div>
 						<label></label>
-						<br/>
 						<input />
 					</div>
 					<div>
 						<label></label>
-						<br/>
 						<input />
 					</div>
 					<div>
 						<label></label>
-						<br/>
 						<input />
 					</div>
 					<div>
@@ -111,7 +108,7 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 			- Check the `Result` property from the `CreateAsync` call if `Result.Success`
 				- If `Result.Success` is `false` foreach error in `Result.Errors` use `ModelState.AddModelError` to add an error with a the first parameter of`"Password"` and second with the value of the error's `Description` property. Then return the `Register` view with the model provided by `Register`'s the parameter.
 				- If `Result.Success` is `true` `RedirectToAction` to `Home.Index`
-	- [ ] Create Login Functionality
+	- [ ] Create Login / Logout Functionality
 		- [ ] Create `LoginViewModel` class in the `Models\AccountViewModels` folder
 			- Create a `String` Property Email
 				- Email should have the Required attribute
@@ -158,7 +155,6 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 			- This should use `SignInManager`'s `PasswordSignInAsync` method with the `(string,string,bool,bool)` signature to attempt to login the user (Note: you will need to check the `Result` property to see the results, pass `false` for the 3rd and 4th parameters)
 				- If the result is `Succeeded` return a `RedirectToAction` to the `Item.Index` action
 				- Otherwise use `ModelState`'s `AddModelError` with a key of `string.Empty` and an `errorMessage` of `"Invalid login attempt."`
-	- [ ] Create Logout Functionality
 		- [ ] `Create` an `HttpPost` action `Logout` in the `AccountController`
 			- This action should have the `HttpPost` attribute
 			- This action should have the `ValidateAntiForgeryToken` attribute
@@ -188,9 +184,9 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 				```
 	- [ ] Create Relationship Between Item and ApplicationUser Models
 		- [ ] Add a `virtual` property of type `ApplicationUser` named `User` to the `Item` model
-		- [ ] Add a `virtual` property of type `ICollection<Item>` named `Items` to the `ApplicationUser` model
+		- [ ] Add a `virtual` property of type `ICollection<Item>` named `Items` to the `ApplicationUser` model (you will need to add a `using` directive for `System.Collections.Generic`)
 	- [ ] Update ItemController actions to consider user
-		- [ ] Add the `Authorize` attribute to the `ItemController` class
+		- [ ] Add the `Authorize` attribute to the `ItemController` class (you will need to add a `using` directive for `Microsoft.AspNetCore.Authorization`)
 		- [ ] Add a new `private` `readonly` field of type `UserManager<ApplicationUser>` named `_userManager`
 		- [ ] Update the `ItemController`'s constructor to accept a second parameter of type `UserManager<ApplicationUser>` and within the costructor set `_userManager` to the provided `UserManager<ApplicationUser>` paramater.
 		- [ ] Update the `ItemController.Index` action to only return items with associated with the currently logged in user.
