@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -58,21 +59,30 @@ namespace WishListTests
             Assert.True((parameters.Count() == 2 && parameters[0]?.ParameterType == typeof(ApplicationDbContext) && parameters[1]?.ParameterType == typeof(UserManager<ApplicationUser>)), "`ItemController` did not contain a constructor with two parameters, first of type `ApplicationDbContext`, second of type `UserManager<ApplicationUser>`.");
 
             var userStore = new Mock<IUserStore<ApplicationUser>>();
-            var userManager = new UserManager<ApplicationUser>(userStore.Object, null, null, null, null, null, null, null, null);
+            var appuser = new ApplicationUser() { Email = "test@test.com" };
+            var userManager = new Mock<UserManager<ApplicationUser>>(userStore.Object, null, null, null, null, null, null, null, null);
+            userManager.Setup(e => e.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(appuser).Verifiable();
             var optionsBuilder = new DbContextOptionsBuilder();
             optionsBuilder.UseInMemoryDatabase("Test");
             var applicationDbContext = new ApplicationDbContext(optionsBuilder.Options);
-            var controller = Activator.CreateInstance(typeof(ItemController), new object[] { applicationDbContext, userManager }) as ItemController;
+            var item = new Item() { Id = 2, Description = "Show" };
+            typeof(Item).GetProperty("User").SetValue(item, appuser);
+            applicationDbContext.Items.Add(new Item() { Id = 1, Description = "Do Not Show" });
+            applicationDbContext.Items.Add(item);
+            applicationDbContext.SaveChanges();
+            var controller = Activator.CreateInstance(typeof(ItemController), new object[] { applicationDbContext, userManager.Object }) as ItemController;
             var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] {
                 new Claim(ClaimTypes.NameIdentifier, "1")
             }));
             controller.ControllerContext = new ControllerContext();
             controller.ControllerContext.HttpContext = new DefaultHttpContext() { User = user };
 
-            //var results = method.Invoke(controller, new object[] { }) as ViewResult;
-            //Assert.True(results != null && results.ViewName == "Login", "`ItemController`'s `Index` method did not return the `Index` view with a model of only items with the logged in User's Id.");
-            //Assert.True(results.Model != null, "`ItemController`'s `Index` method did return the `Index` view with a model of only items with the logged in User's Id.");
-            // verify results contain only correct items
+            var results = method.Invoke(controller, new object[] { }) as ViewResult;
+            Assert.True(results != null && results.ViewName == "Index", "`ItemController`'s `Index` method did not return the `Index` view with a model of only items with the logged in User's Id.");
+            Assert.True(results.Model != null, "`ItemController`'s `Index` method did return the `Index` view but without a model of only items with the logged in User's Id.");
+            Assert.True(results.Model.GetType() == typeof(List<Item>), "`ItemController`'s `Index` method did return the `Index` view a model but the model was not of type `List<Item>`.");
+            Assert.True(((List<Item>)results.Model).Count == 1, "`ItemController`'s `Index` method did return the `Index` view but without a model of only items with the logged in User's Id.");
+            Assert.True(typeof(Item).GetProperty("User").GetValue(((List<Item>)results.Model)[0]) == appuser, "`ItemController`'s `Index` method did return the `Index` view but without a model of only items with the logged in User's Id.");
         }
 
         [Fact(DisplayName = "Update Create Action @update-create-action")]
