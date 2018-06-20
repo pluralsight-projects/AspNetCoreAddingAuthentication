@@ -65,9 +65,9 @@ namespace WishListTests
             var optionsBuilder = new DbContextOptionsBuilder();
             optionsBuilder.UseInMemoryDatabase("Test");
             var applicationDbContext = new ApplicationDbContext(optionsBuilder.Options);
-            var item = new Item() { Id = 2, Description = "Show" };
+            var item = new Item() { Id = 20, Description = "Show" };
             typeof(Item).GetProperty("User").SetValue(item, appuser);
-            applicationDbContext.Items.Add(new Item() { Id = 1, Description = "Do Not Show" });
+            applicationDbContext.Items.Add(new Item() { Id = 10, Description = "Do Not Show" });
             applicationDbContext.Items.Add(item);
             applicationDbContext.SaveChanges();
             var controller = Activator.CreateInstance(typeof(ItemController), new object[] { applicationDbContext, userManager.Object }) as ItemController;
@@ -95,18 +95,20 @@ namespace WishListTests
             Assert.True((parameters.Count() == 2 && parameters[0]?.ParameterType == typeof(ApplicationDbContext) && parameters[1]?.ParameterType == typeof(UserManager<ApplicationUser>)), "`ItemController` did not contain a constructor with two parameters, first of type `ApplicationDbContext`, second of type `UserManager<ApplicationUser>`.");
 
             var userStore = new Mock<IUserStore<ApplicationUser>>();
-            var userManager = new UserManager<ApplicationUser>(userStore.Object, null, null, null, null, null, null, null, null);
+            var appuser = new ApplicationUser() { Email = "test@test.com" };
+            var userManager = new Mock<UserManager<ApplicationUser>>(userStore.Object, null, null, null, null, null, null, null, null);
+            userManager.Setup(e => e.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(appuser).Verifiable();
             var optionsBuilder = new DbContextOptionsBuilder();
             optionsBuilder.UseInMemoryDatabase("Test");
             var applicationDbContext = new ApplicationDbContext(optionsBuilder.Options);
-            var controller = Activator.CreateInstance(typeof(ItemController), new object[] { applicationDbContext, userManager }) as ItemController;
+            var controller = Activator.CreateInstance(typeof(ItemController), new object[] { applicationDbContext, userManager.Object }) as ItemController;
             controller.ControllerContext = new ControllerContext();
             controller.ControllerContext.HttpContext = new DefaultHttpContext();
             controller.ControllerContext.HttpContext.User = new ClaimsPrincipal();
             controller.ControllerContext.HttpContext.User.AddIdentity(new ClaimsIdentity());
 
-            //var results = method.Invoke(controller, new object[] { new Item() { Id = 1, Description = "Test" } }) as ViewResult;
-            //Assert.True(results != null, "`ItemController`'s `Create` method did not run successfully, please run locally and verify results.");
+            var results = method.Invoke(controller, new object[] { new Item() { Id = 1, Description = "Test" } }) as RedirectToActionResult;
+            Assert.True(results != null, "`ItemController`'s `Create` method did not run successfully, please run locally and verify results.");
             // Verify this sets the item / user relationship
         }
 
@@ -129,16 +131,23 @@ namespace WishListTests
             Assert.True((parameters.Count() == 2 && parameters[0]?.ParameterType == typeof(ApplicationDbContext) && parameters[1]?.ParameterType == typeof(UserManager<ApplicationUser>)), "`ItemController` did not contain a constructor with two parameters, first of type `ApplicationDbContext`, second of type `UserManager<ApplicationUser>`.");
 
             var userStore = new Mock<IUserStore<ApplicationUser>>();
-            var userManager = new UserManager<ApplicationUser>(userStore.Object, null, null, null, null, null, null, null, null);
+            var appuser = new ApplicationUser() { Email = "test@test.com" };
+            var userManager = new Mock<UserManager<ApplicationUser>>(userStore.Object, null, null, null, null, null, null, null, null);
+            userManager.Setup(e => e.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(appuser).Verifiable();
             var optionsBuilder = new DbContextOptionsBuilder();
             optionsBuilder.UseInMemoryDatabase("Test");
             var applicationDbContext = new ApplicationDbContext(optionsBuilder.Options);
-            var controller = Activator.CreateInstance(itemController, new object[] { applicationDbContext, userManager }) as ItemController;
+            var item = new Item() { Id = 99, Description = "Show" };
+            typeof(Item).GetProperty("User").SetValue(item, appuser);
+            applicationDbContext.Items.Add(item);
+            applicationDbContext.SaveChanges();
+
+            var controller = Activator.CreateInstance(itemController, new object[] { applicationDbContext, userManager.Object }) as ItemController;
             controller.ControllerContext = new ControllerContext();
             controller.ControllerContext.HttpContext = new DefaultHttpContext();
 
-            //var results = method.Invoke(controller, new object[] { 1 }) as ViewResult;
-            //Assert.True(results != null, "`ItemController`'s `Delete` method did not run successfully, please run locally and verify results.");
+            var results = method.Invoke(controller, new object[] { 99 }) as RedirectToActionResult;
+            Assert.True(results != null, "`ItemController`'s `Delete` method did not run successfully, please run locally and verify results.");
             // Verify this doesn't remove the item when the user doesn't match
         }
     }
