@@ -137,9 +137,12 @@ namespace WishListTests
             var optionsBuilder = new DbContextOptionsBuilder();
             optionsBuilder.UseInMemoryDatabase("Test");
             var applicationDbContext = new ApplicationDbContext(optionsBuilder.Options);
-            var item = new Item() { Id = 99, Description = "Show" };
+            var item = new Item() { Id = 99, Description = "Delete" };
             typeof(Item).GetProperty("User").SetValue(item, appuser);
             applicationDbContext.Items.Add(item);
+            var item2 = new Item() { Id = 107, Description = "Don't Delete" };
+            typeof(Item).GetProperty("User").SetValue(item2, new ApplicationUser() { Email = "bad@user.com" });
+            applicationDbContext.Items.Add(item2);
             applicationDbContext.SaveChanges();
 
             var controller = Activator.CreateInstance(itemController, new object[] { applicationDbContext, userManager.Object }) as ItemController;
@@ -148,7 +151,11 @@ namespace WishListTests
 
             var results = method.Invoke(controller, new object[] { 99 }) as RedirectToActionResult;
             Assert.True(results != null, "`ItemController`'s `Delete` method did not run successfully, please run locally and verify results.");
-            // Verify this doesn't remove the item when the user doesn't match
+            Assert.True(!applicationDbContext.Items.Any(e => e.Id == 99), "`ItemController`'s `Delete` method did not delete the `Item` with the matching `Id` when the correct user was logged in.");
+
+            var unauthorizedResults = method.Invoke(controller, new object[] { 107 }) as UnauthorizedResult;
+            Assert.True(unauthorizedResults != null, "`ItemController`'s `Delete` method did not return `Unauthorized` when the `Item`'s `User` did not match the logged in `User`.");
+            Assert.True(applicationDbContext.Items.Any(e => e.Id == 107), "`ItemController`'s `Delete` method deleted the `Item` even though the logged in user wasn't the same as the `Item`'s `User`.");
         }
     }
 }
