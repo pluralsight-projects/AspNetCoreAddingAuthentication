@@ -102,12 +102,12 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 			- This action should have the `HttpPost` attribute
 			- This action should have the `AllowAnonymous` attribute
 			- This action should accept a parameter of type `RegisterViewModel`
-			- This action should check if the `ModelState` is valid
+			- This action should return a `RedirectToAction` to `HomeController.Index`
+		- [ ] Update the `HttpPost` `Register` action to check if the `ModelState` is valid
 				- If not return the `Register` view with the model provided in the parameter as it's model
-			- This action should create the new user using the `_userManager.CreateAsync` method providing it a valid `ApplicationUser` (you will need to set the `User` and `Email` properties to the `Email` from the `RegisterViewModel`) and a `string`  which you'll set the the `Password` property from the `RegisterViewModel`
-			- Check the `Result` property from the `CreateAsync` call if `Result.Success`
+		- [ ] Update the `HttpPost` `Register` action to create the new user using the `_userManager.CreateAsync` method providing it a valid `ApplicationUser` (you will need to set the `User` and `Email` properties to the `Email` from the `RegisterViewModel`) and a `string`  which you'll set the the `Password` property from the `RegisterViewModel`
+		- [ ] Check the `Result` property from the `HttpPost` `Register`'s the `CreateAsync` call if `Result.Success`
 				- If `Result.Success` is `false` foreach error in `Result.Errors` use `ModelState.AddModelError` to add an error with a the first parameter of`"Password"` and second with the value of the error's `Description` property. Then return the `Register` view with the model provided by `Register`'s the parameter.
-				- If `Result.Success` is `true` `RedirectToAction` to `Home.Index`
 	- [ ] Create Login / Logout Functionality
 		- [ ] Create `LoginViewModel` class in the `Models\AccountViewModels` folder
 			- Create a `String` Property Email
@@ -150,11 +150,11 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 			- This action should have the `ValidateAntiForgeryToken` attribute
 			- This action should have a return type of `IActionResult`
 			- This action should accept a parameter of type `LoginViewModel`
-			- This action should check if the `ModelState` is valid
-				- If not return the `Login` view with the model provided in the parameter as it's model
-			- This should use `SignInManager`'s `PasswordSignInAsync` method with the `(string,string,bool,bool)` signature to attempt to login the user (Note: you will need to check the `Result` property to see the results, pass `false` for the 3rd and 4th parameters)
-				- If the result is `Succeeded` return a `RedirectToAction` to the `Item.Index` action
-				- Otherwise use `ModelState`'s `AddModelError` with a key of `string.Empty` and an `errorMessage` of `"Invalid login attempt."`
+			- This action should return a `RedirectToAction` to the `Home.Index` action.
+		- [ ] This action should check if the `ModelState` is valid
+			- If not return the `Login` view with the model provided in the parameter as it's model
+		- [ ] This should use `SignInManager`'s `PasswordSignInAsync` method with the `(string,string,bool,bool)` signature to attempt to login the user (Note: you will need to check the `Result` property to see the results, pass `false` for the 3rd and 4th parameters)
+			- if the `SignInResult` returned by `PasswordSignInAsync`'s `Succeeded` property is `false` use `ModelState`'s `AddModelError` with a key of `string.Empty` and an `errorMessage` of `"Invalid login attempt."`
 		- [ ] `Create` an `HttpPost` action `Logout` in the `AccountController`
 			- This action should have the `HttpPost` attribute
 			- This action should have the `ValidateAntiForgeryToken` attribute
@@ -194,7 +194,8 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 		- [ ] Update the `HttpPost` `ItemController.Create` action to add the logged in User to the `Item`
 			- Before adding the Item to set the UserId to the logged in user's Id (You can get the current logged in user using `UserManager.GetUserAsync(HttpContext.User)`)
 		- [ ] Update the `ItemController.Delete` action to prevent deleting items by anyone but the user who owns that item.
-			- Before removing the Item check te make sure the Item's User is the same as the logged in user, if not return `Unauthorized`
+			- Before removing the `Item` check that it is not `null` if it is `null` return `NotFound`
+			- After checking if `Item` is null, but before removing the `Item` check te make sure the Item's User is the same as the logged in user, if not return `Unauthorized`
 	
 ## What Now?
 
