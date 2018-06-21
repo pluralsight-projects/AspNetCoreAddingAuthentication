@@ -162,7 +162,162 @@ namespace WishListTests
             var contextAccessor = new Mock<IHttpContextAccessor>();
             var claimsFactory = new Mock<IUserClaimsPrincipalFactory<ApplicationUser>>();
             var userManager = new Mock<UserManager<ApplicationUser>>(userStore.Object, null, null, null, null, null, null, null, null);
+            userManager.Setup(e => e.CreateAsync(It.IsAny<ApplicationUser>(), "success")).ReturnsAsync(IdentityResult.Success);
+            var signInManager = new Mock<SignInManager<ApplicationUser>>(userManager.Object, contextAccessor.Object, claimsFactory.Object, null, null, null);
+            var controller = Activator.CreateInstance(accountController, new object[] { userManager.Object, signInManager.Object });
+            var model = Activator.CreateInstance(registerViewModel, null);
+            registerViewModel.GetProperty("Email").SetValue(model, "Test@Test.com");
+            registerViewModel.GetProperty("Password").SetValue(model, "success");
+            registerViewModel.GetProperty("ConfirmPassword").SetValue(model, "success");
+            var goodModelResults = method.Invoke(controller, new object[] { model }) as RedirectToActionResult;
+            Assert.True(goodModelResults != null && goodModelResults.ControllerName == "Home" && goodModelResults.ActionName == "Index", "`AccountController`'s Post `Register` method did not return a `RedirectToAction` to the `HomeController.Index` action.");
+        }
+
+        [Fact(DisplayName = "Add ModelState Check To HttpPost Register Action @add-modelstate-check-to-httppost-register-action")]
+        public void AddModelStateCheckToHttpPostRegisterActionTest()
+        {
+            var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Controllers" + Path.DirectorySeparatorChar + "AccountController.cs";
+            Assert.True(File.Exists(filePath), @"`AccountController.cs` was not found in the `Controllers` folder.");
+
+            var accountController = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                                     from type in assembly.GetTypes()
+                                     where type.FullName == "WishList.Controllers.AccountController"
+                                     select type).FirstOrDefault();
+            Assert.True(accountController != null, "A `public` class `AccountController` was not found in the `WishList.Controllers` namespace.");
+
+            var registerViewModel = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                                     from type in assembly.GetTypes()
+                                     where type.FullName == "WishList.Models.AccountViewModels.RegisterViewModel"
+                                     select type).FirstOrDefault();
+            Assert.True(registerViewModel != null, "A `public` class `RegisterViewModel` was not found in the `WishList.Models.AccountViewModels` namespace.");
+
+            var method = accountController.GetMethod("Register", new Type[] { registerViewModel });
+            Assert.True(method != null, "`AccountController` did not contain a `Register` method with a parameter of type `RegisterViewModel`.");
+            Assert.True(method.ReturnType == typeof(IActionResult), "`AccountController`'s Post `Register` method did not have a return type of `IActionResult`");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(HttpPostAttribute)) != null, "`AccountController` did not contain a `Register` method with an `HttpPost` attribute");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(AllowAnonymousAttribute)) != null, "`AccountController`'s Post `Register` method did not have the `AllowAnonymous` attribute");
+
+            var userStore = new Mock<IUserPasswordStore<ApplicationUser>>();
+            var contextAccessor = new Mock<IHttpContextAccessor>();
+            var claimsFactory = new Mock<IUserClaimsPrincipalFactory<ApplicationUser>>();
+            var userManager = new Mock<UserManager<ApplicationUser>>(userStore.Object, null, null, null, null, null, null, null, null);
             userManager.Setup(e => e.CreateAsync(It.IsAny<ApplicationUser>(),"success")).ReturnsAsync(IdentityResult.Success).Verifiable();
+            userManager.Setup(e => e.CreateAsync(It.IsAny<ApplicationUser>(), "failure")).ReturnsAsync(IdentityResult.Failed(new IdentityError[] { new IdentityError { Code = string.Empty, Description = "Bad Password" } }));
+            var signInManager = new Mock<SignInManager<ApplicationUser>>(userManager.Object, contextAccessor.Object, claimsFactory.Object, null, null, null);
+            var controller = Activator.CreateInstance(accountController, new object[] { userManager.Object, signInManager.Object });
+            var model = Activator.CreateInstance(registerViewModel, null);
+            registerViewModel.GetProperty("Email").SetValue(model, "Test@Test.com");
+            registerViewModel.GetProperty("Password").SetValue(model, "failure");
+            registerViewModel.GetProperty("ConfirmPassword").SetValue(model, "failure");
+
+            var modelState = accountController.GetProperty("ModelState").GetValue(controller);
+            var addModelError = typeof(ModelStateDictionary).GetMethod("AddModelError", new Type[] { typeof(string), typeof(string) });
+            addModelError.Invoke(modelState, new object[] { "Email", "The entered email is not a valid email address." });
+
+            var badModelResults = method.Invoke(controller, new object[] { model }) as ViewResult;
+            Assert.True(badModelResults != null && (badModelResults.ViewName == "Register" || badModelResults.ViewName == null), "`AccountController`'s Post `Register` method did not return the `Register` view when the `ModelState` was not valid.");
+            Assert.True(badModelResults.Model == model, "`AccountController`'s Post `Register` method did not provide the invalid model when returning the `Register` view when the `ModelState` was not valid.");
+
+            var clearModelError = typeof(ModelStateDictionary).GetMethod("Clear", new Type[] { });
+            clearModelError.Invoke(modelState, new object[] { });
+
+            registerViewModel.GetProperty("Password").SetValue(model, "success");
+            registerViewModel.GetProperty("ConfirmPassword").SetValue(model, "success");
+            var goodModelResults = method.Invoke(controller, new object[] { model }) as RedirectToActionResult;
+            Assert.True(goodModelResults != null && goodModelResults.ControllerName == "Home" && goodModelResults.ActionName == "Index", "`AccountController`'s Post `Register` method did not return a `RedirectToAction` to the `Home.Index` action when a valid model was submitted.");
+        }
+
+        [Fact(DisplayName = "Call CreateAsync In HttpPost Register Action @call-creatasync-in-httppost-register-action")]
+        public void CallCreateAsyncInHttpPostRegisterActionTest()
+        {
+            var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Controllers" + Path.DirectorySeparatorChar + "AccountController.cs";
+            Assert.True(File.Exists(filePath), @"`AccountController.cs` was not found in the `Controllers` folder.");
+
+            var accountController = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                                     from type in assembly.GetTypes()
+                                     where type.FullName == "WishList.Controllers.AccountController"
+                                     select type).FirstOrDefault();
+            Assert.True(accountController != null, "A `public` class `AccountController` was not found in the `WishList.Controllers` namespace.");
+
+            var registerViewModel = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                                     from type in assembly.GetTypes()
+                                     where type.FullName == "WishList.Models.AccountViewModels.RegisterViewModel"
+                                     select type).FirstOrDefault();
+            Assert.True(registerViewModel != null, "A `public` class `RegisterViewModel` was not found in the `WishList.Models.AccountViewModels` namespace.");
+
+            var method = accountController.GetMethod("Register", new Type[] { registerViewModel });
+            Assert.True(method != null, "`AccountController` did not contain a `Register` method with a parameter of type `RegisterViewModel`.");
+            Assert.True(method.ReturnType == typeof(IActionResult), "`AccountController`'s Post `Register` method did not have a return type of `IActionResult`");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(HttpPostAttribute)) != null, "`AccountController` did not contain a `Register` method with an `HttpPost` attribute");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(AllowAnonymousAttribute)) != null, "`AccountController`'s Post `Register` method did not have the `AllowAnonymous` attribute");
+
+            var userStore = new Mock<IUserPasswordStore<ApplicationUser>>();
+            var contextAccessor = new Mock<IHttpContextAccessor>();
+            var claimsFactory = new Mock<IUserClaimsPrincipalFactory<ApplicationUser>>();
+            var userManager = new Mock<UserManager<ApplicationUser>>(userStore.Object, null, null, null, null, null, null, null, null);
+            userManager.Setup(e => e.CreateAsync(It.IsAny<ApplicationUser>(),"success")).ReturnsAsync(IdentityResult.Success).Verifiable();
+            userManager.Setup(e => e.CreateAsync(It.IsAny<ApplicationUser>(), "failure")).ReturnsAsync(IdentityResult.Failed(new IdentityError[] { new IdentityError { Code = string.Empty, Description = "Bad Password" } }));
+            var signInManager = new Mock<SignInManager<ApplicationUser>>(userManager.Object, contextAccessor.Object, claimsFactory.Object, null, null, null);
+            var controller = Activator.CreateInstance(accountController, new object[] { userManager.Object, signInManager.Object });
+            var model = Activator.CreateInstance(registerViewModel, null);
+            registerViewModel.GetProperty("Email").SetValue(model, "Test@Test.com");
+            registerViewModel.GetProperty("Password").SetValue(model, "failure");
+            registerViewModel.GetProperty("ConfirmPassword").SetValue(model, "failure");
+
+            var modelState = accountController.GetProperty("ModelState").GetValue(controller);
+            var addModelError = typeof(ModelStateDictionary).GetMethod("AddModelError", new Type[] { typeof(string), typeof(string) });
+            addModelError.Invoke(modelState, new object[] { "Email", "The entered email is not a valid email address." });
+
+            var badModelResults = method.Invoke(controller, new object[] { model }) as ViewResult;
+            Assert.True(badModelResults != null && (badModelResults.ViewName == "Register" || badModelResults.ViewName == null), "`AccountController`'s Post `Register` method did not return the `Register` view when the `ModelState` was not valid.");
+            Assert.True(badModelResults.Model == model, "`AccountController`'s Post `Register` method did not provide the invalid model when returning the `Register` view when the `ModelState` was not valid.");
+
+            var clearModelError = typeof(ModelStateDictionary).GetMethod("Clear", new Type[] { });
+            clearModelError.Invoke(modelState, new object[] { });
+
+            registerViewModel.GetProperty("Password").SetValue(model, "success");
+            registerViewModel.GetProperty("ConfirmPassword").SetValue(model, "success");
+            var goodModelResults = method.Invoke(controller, new object[] { model }) as RedirectToActionResult;
+            try
+            {
+                userManager.Verify();
+            }
+            catch (MockException)
+            {
+                Assert.True(false, "`AccountController`'s Post `Register` action did not create a new user when the model was valid.");
+            }
+            Assert.True(goodModelResults != null && goodModelResults.ControllerName == "Home" && goodModelResults.ActionName == "Index", "`AccountController`'s Post `Register` method did not return a `RedirectToAction` to the `Home.Index` action when a valid model was submitted.");
+        }
+
+        [Fact(DisplayName = "Check CreateAsync Result HttpPost Register Action @check-creatasync-result-httppost-register-action")]
+        public void CheckCreateAsyncResultHttpPostRegisterActionTest()
+        {
+            var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Controllers" + Path.DirectorySeparatorChar + "AccountController.cs";
+            Assert.True(File.Exists(filePath), @"`AccountController.cs` was not found in the `Controllers` folder.");
+
+            var accountController = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                                     from type in assembly.GetTypes()
+                                     where type.FullName == "WishList.Controllers.AccountController"
+                                     select type).FirstOrDefault();
+            Assert.True(accountController != null, "A `public` class `AccountController` was not found in the `WishList.Controllers` namespace.");
+
+            var registerViewModel = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                                     from type in assembly.GetTypes()
+                                     where type.FullName == "WishList.Models.AccountViewModels.RegisterViewModel"
+                                     select type).FirstOrDefault();
+            Assert.True(registerViewModel != null, "A `public` class `RegisterViewModel` was not found in the `WishList.Models.AccountViewModels` namespace.");
+
+            var method = accountController.GetMethod("Register", new Type[] { registerViewModel });
+            Assert.True(method != null, "`AccountController` did not contain a `Register` method with a parameter of type `RegisterViewModel`.");
+            Assert.True(method.ReturnType == typeof(IActionResult), "`AccountController`'s Post `Register` method did not have a return type of `IActionResult`");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(HttpPostAttribute)) != null, "`AccountController` did not contain a `Register` method with an `HttpPost` attribute");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(AllowAnonymousAttribute)) != null, "`AccountController`'s Post `Register` method did not have the `AllowAnonymous` attribute");
+
+            var userStore = new Mock<IUserPasswordStore<ApplicationUser>>();
+            var contextAccessor = new Mock<IHttpContextAccessor>();
+            var claimsFactory = new Mock<IUserClaimsPrincipalFactory<ApplicationUser>>();
+            var userManager = new Mock<UserManager<ApplicationUser>>(userStore.Object, null, null, null, null, null, null, null, null);
+            userManager.Setup(e => e.CreateAsync(It.IsAny<ApplicationUser>(), "success")).ReturnsAsync(IdentityResult.Success).Verifiable();
             userManager.Setup(e => e.CreateAsync(It.IsAny<ApplicationUser>(), "failure")).ReturnsAsync(IdentityResult.Failed(new IdentityError[] { new IdentityError { Code = string.Empty, Description = "Bad Password" } }));
             var signInManager = new Mock<SignInManager<ApplicationUser>>(userManager.Object, contextAccessor.Object, claimsFactory.Object, null, null, null);
             var controller = Activator.CreateInstance(accountController, new object[] { userManager.Object, signInManager.Object });
@@ -184,7 +339,7 @@ namespace WishListTests
 
 
             var badPasswordResults = method.Invoke(controller, new object[] { model }) as ViewResult;
-            Assert.True(badPasswordResults != null && (badPasswordResults.ViewName == "Register" || badPasswordResults.ViewName == null),"`AccountController`'s Post `Register` action did not return the `Register` view when `CreateAsync` failed to create the user");
+            Assert.True(badPasswordResults != null && (badPasswordResults.ViewName == "Register" || badPasswordResults.ViewName == null), "`AccountController`'s Post `Register` action did not return the `Register` view when `CreateAsync` failed to create the user");
             Assert.True(badPasswordResults.ViewData != null && badPasswordResults.ViewData.ModelState != null && badPasswordResults.ViewData.ModelState.ErrorCount == 1, "`AccountController`'s Post `Register` action did not add errors from the `Errors` property of the returned `IdentityResult` from  `CreateAsync` when it failed to create the user");
 
             clearModelError.Invoke(modelState, new object[] { });
