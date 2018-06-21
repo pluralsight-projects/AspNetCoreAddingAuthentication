@@ -53,7 +53,7 @@ namespace WishListTests
             {
                 file = streamReader.ReadToEnd();
             }
-            Assert.True(file.Contains("LoginViewModel"),"`Login.cshtml` was found, but does not appear to contain the provided view (copy and paste the login view from the associated task in the `readme.md` file)");
+            Assert.True(file.Contains("LoginViewModel"), "`Login.cshtml` was found, but does not appear to contain the provided view (copy and paste the login view from the associated task in the `readme.md` file)");
         }
 
         [Fact(DisplayName = "Create HttpGet Login Action @create-httpget-login-action")]
@@ -108,7 +108,101 @@ namespace WishListTests
             Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(HttpPostAttribute)) != null, "`AccountController``s `Login` method did not have the `HttpPost` attribute.");
             Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(AllowAnonymousAttribute)) != null, "`AccountController`'s `Login` method did not have the `AllowAnonymous` attribute.");
             Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(ValidateAntiForgeryTokenAttribute)) != null, "`AccountController`'s `Login` method did not have the `ValidateAntiForgeryToken` attribute.");
-            
+
+            var userStore = new Mock<IUserPasswordStore<ApplicationUser>>();
+            var contextAccessor = new Mock<IHttpContextAccessor>();
+            var claimsFactory = new Mock<IUserClaimsPrincipalFactory<ApplicationUser>>();
+            var userManager = new Mock<UserManager<ApplicationUser>>(userStore.Object, null, null, null, null, null, null, null, null);
+            var signInManager = new Mock<SignInManager<ApplicationUser>>(userManager.Object, contextAccessor.Object, claimsFactory.Object, null, null, null);
+            signInManager.Setup(e => e.PasswordSignInAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>())).ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed);
+            signInManager.Setup(e => e.PasswordSignInAsync(It.IsAny<string>(), "failure", It.IsAny<bool>(), It.IsAny<bool>())).ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed).Verifiable();
+            signInManager.Setup(e => e.PasswordSignInAsync(It.IsAny<string>(), "success", It.IsAny<bool>(), It.IsAny<bool>())).ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
+            var controller = Activator.CreateInstance(accountController, new object[] { userManager.Object, signInManager.Object });
+            var model = Activator.CreateInstance(loginViewModel, null);
+            loginViewModel.GetProperty("Email").SetValue(model, "Valid@Email.com");
+            loginViewModel.GetProperty("Password").SetValue(model, "success");
+            var goodResults = method.Invoke(controller, new object[] { model }) as RedirectToActionResult;
+            Assert.True(goodResults != null && goodResults.ControllerName == "Item" && goodResults.ActionName == "Index", "`AccountController`'s `Login` method did not return a `RedirectToAction` to the `Item.Index` action when login was successful.");
+        }
+
+        [Fact(DisplayName = "Check ModelState In HttpPost Login Action @check-modelstate-in-httppost-login-action")]
+        public void CheckModelInHttpPostLoginActionTest()
+        {
+            var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Controllers" + Path.DirectorySeparatorChar + "AccountController.cs";
+            Assert.True(File.Exists(filePath), @"`AccountController.cs` was not found in the `Controllers` folder.");
+
+            var accountController = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                                     from type in assembly.GetTypes()
+                                     where type.FullName == "WishList.Controllers.AccountController"
+                                     select type).FirstOrDefault();
+            Assert.True(accountController != null, "A `public` class `AccountController` was not found in the `WishList.Controllers` namespace.");
+
+            var loginViewModel = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                                  from type in assembly.GetTypes()
+                                  where type.FullName == "WishList.Models.AccountViewModels.LoginViewModel"
+                                  select type).FirstOrDefault();
+            Assert.True(loginViewModel != null, "A `public` class `LoginViewModel` was not found in the `WishList.Models.AccountViewModels` namespace.");
+
+            var method = accountController.GetMethod("Login", new Type[] { loginViewModel });
+            Assert.True(method != null, "`AccountController` did not contain a `Login` method with a parameter of type `LoginViewModel`.");
+            Assert.True(method.ReturnType == typeof(IActionResult), "`AccountController`'s `Login` method did not have a return type of `IActionResult`.");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(HttpPostAttribute)) != null, "`AccountController``s `Login` method did not have the `HttpPost` attribute.");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(AllowAnonymousAttribute)) != null, "`AccountController`'s `Login` method did not have the `AllowAnonymous` attribute.");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(ValidateAntiForgeryTokenAttribute)) != null, "`AccountController`'s `Login` method did not have the `ValidateAntiForgeryToken` attribute.");
+
+            var userStore = new Mock<IUserPasswordStore<ApplicationUser>>();
+            var contextAccessor = new Mock<IHttpContextAccessor>();
+            var claimsFactory = new Mock<IUserClaimsPrincipalFactory<ApplicationUser>>();
+            var userManager = new Mock<UserManager<ApplicationUser>>(userStore.Object, null, null, null, null, null, null, null, null);
+            var signInManager = new Mock<SignInManager<ApplicationUser>>(userManager.Object, contextAccessor.Object, claimsFactory.Object, null, null, null);
+            signInManager.Setup(e => e.PasswordSignInAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>())).ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed);
+            signInManager.Setup(e => e.PasswordSignInAsync(It.IsAny<string>(), "failure", It.IsAny<bool>(), It.IsAny<bool>())).ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed).Verifiable();
+            signInManager.Setup(e => e.PasswordSignInAsync(It.IsAny<string>(), "success", It.IsAny<bool>(), It.IsAny<bool>())).ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
+            var controller = Activator.CreateInstance(accountController, new object[] { userManager.Object, signInManager.Object });
+            var model = Activator.CreateInstance(loginViewModel, null);
+            loginViewModel.GetProperty("Email").SetValue(model, "Valid@Email.com");
+            loginViewModel.GetProperty("Password").SetValue(model, "success");
+
+            var modelState = accountController.GetProperty("ModelState").GetValue(controller);
+            var addModelError = typeof(ModelStateDictionary).GetMethod("AddModelError", new Type[] { typeof(string), typeof(string) });
+            addModelError.Invoke(modelState, new object[] { "Email", "The entered email is not a valid email address." });
+
+            var invalidModelResults = method.Invoke(controller, new object[] { model }) as ViewResult;
+            Assert.True(invalidModelResults != null && (invalidModelResults.ViewName == "Login" || invalidModelResults.ViewName == null), "`AccountController`'s Post `Login` method did not return the `Login` view when the `ModelState` was not valid.");
+            Assert.True(invalidModelResults.Model == model, "`AccountController`'s Post `Login` method did not provide the invalid model when returning the `Register` view when the `ModelState` was not valid.");
+
+            var clearModelState = typeof(ModelStateDictionary).GetMethod("Clear");
+            clearModelState.Invoke(modelState, new object[] { });
+
+            var goodResults = method.Invoke(controller, new object[] { model }) as RedirectToActionResult;
+            Assert.True(goodResults != null && goodResults.ControllerName == "Item" && goodResults.ActionName == "Index", "`AccountController`'s `Login` method did not return a `RedirectToAction` to the `Item.Index` action when login was successful.");
+        }
+
+        [Fact(DisplayName = "Check PasswordSignInAsync Results In HttpPost Login Action @check-passwordsignin-results-in-httppost-login-action")]
+        public void CheckPasswordSignInAsyncResultsInHttpPostLoginActionTest()
+        {
+            var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Controllers" + Path.DirectorySeparatorChar + "AccountController.cs";
+            Assert.True(File.Exists(filePath), @"`AccountController.cs` was not found in the `Controllers` folder.");
+
+            var accountController = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                                     from type in assembly.GetTypes()
+                                     where type.FullName == "WishList.Controllers.AccountController"
+                                     select type).FirstOrDefault();
+            Assert.True(accountController != null, "A `public` class `AccountController` was not found in the `WishList.Controllers` namespace.");
+
+            var loginViewModel = (from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                                  from type in assembly.GetTypes()
+                                  where type.FullName == "WishList.Models.AccountViewModels.LoginViewModel"
+                                  select type).FirstOrDefault();
+            Assert.True(loginViewModel != null, "A `public` class `LoginViewModel` was not found in the `WishList.Models.AccountViewModels` namespace.");
+
+            var method = accountController.GetMethod("Login", new Type[] { loginViewModel });
+            Assert.True(method != null, "`AccountController` did not contain a `Login` method with a parameter of type `LoginViewModel`.");
+            Assert.True(method.ReturnType == typeof(IActionResult), "`AccountController`'s `Login` method did not have a return type of `IActionResult`.");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(HttpPostAttribute)) != null, "`AccountController``s `Login` method did not have the `HttpPost` attribute.");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(AllowAnonymousAttribute)) != null, "`AccountController`'s `Login` method did not have the `AllowAnonymous` attribute.");
+            Assert.True(method.CustomAttributes.FirstOrDefault(e => e.AttributeType == typeof(ValidateAntiForgeryTokenAttribute)) != null, "`AccountController`'s `Login` method did not have the `ValidateAntiForgeryToken` attribute.");
+
             var userStore = new Mock<IUserPasswordStore<ApplicationUser>>();
             var contextAccessor = new Mock<IHttpContextAccessor>();
             var claimsFactory = new Mock<IUserClaimsPrincipalFactory<ApplicationUser>>();
@@ -152,6 +246,7 @@ namespace WishListTests
             Assert.True(goodResults != null && goodResults.ControllerName == "Item" && goodResults.ActionName == "Index", "`AccountController`'s `Login` method did not return a `RedirectToAction` to the `Item.Index` action when login was successful.");
         }
 
+        [Fact(DisplayName = "Create Logout Action @create-logout-action")]
         public void CreateHttpPostLogoutActionTest()
         {
             var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Controllers" + Path.DirectorySeparatorChar + "AccountController.cs";
