@@ -151,9 +151,9 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 			- This action should have a return type of `IActionResult`
 			- This action should accept a parameter of type `LoginViewModel`
 			- This action should return a `RedirectToAction` to the `Home.Index` action.
-		- [ ] This action should check if the `ModelState` is valid
+		- [ ] Update `HttpPost` `Login` to check if the `ModelState` is valid
 			- If not return the `Login` view with the model provided in the parameter as it's model
-		- [ ] This should use `SignInManager`'s `PasswordSignInAsync` method with the `(string,string,bool,bool)` signature to attempt to login the user (Note: you will need to check the `Result` property to see the results, pass `false` for the 3rd and 4th parameters)
+		- [ ] Update `HttpPost` `Login` to use `SignInManager`'s `PasswordSignInAsync` method with the `(string,string,bool,bool)` signature to attempt to login the user (Note: you will need to check the `Result` property to see the results, pass `false` for the 3rd and 4th parameters)
 			- if the `SignInResult` returned by `PasswordSignInAsync`'s `Succeeded` property is `false` use `ModelState`'s `AddModelError` with a key of `string.Empty` and an `errorMessage` of `"Invalid login attempt."`
 		- [ ] `Create` an `HttpPost` action `Logout` in the `AccountController`
 			- This action should have the `HttpPost` attribute
