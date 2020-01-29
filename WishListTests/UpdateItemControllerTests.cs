@@ -19,6 +19,8 @@ namespace WishListTests
 {
     public class UpdateItemControllerTests
     {
+        private Type itemController = ReflectionHelpers.GetUserType("WishList.Controllers.ItemController");
+
         [Fact(DisplayName = "Update ItemController @update-itemcontroller")]
         public void UpdateItemControllerTest()
         {
@@ -118,7 +120,6 @@ namespace WishListTests
             var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Controllers" + Path.DirectorySeparatorChar + "ItemController.cs";
             Assert.True(File.Exists(filePath), @"`ItemController.cs` was not found in the `Controllers` folder.");
 
-            var itemController = TestHelpers.GetUserType("WishList.Controllers.ItemController");
             Assert.True(itemController != null, "A `public` class `ItemController` was not found in the `WishList.Controllers` namespace.");
 
             var method = itemController.GetMethod("Delete", new Type[] { typeof(int) });

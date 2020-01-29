@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace WishListTests
 {
-    public static class TestHelpers
+    public class ReflectionHelpers
     {
         private static readonly string _projectName = "WishList";
 

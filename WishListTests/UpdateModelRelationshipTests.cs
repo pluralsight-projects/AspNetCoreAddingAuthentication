@@ -9,13 +9,15 @@ namespace WishListTests
 {
     public class UpdateModelRelationshipTests
     {
+        private Type item = ReflectionHelpers.GetUserType("WishList.Models.Item");
+        private Type applicationUser = ReflectionHelpers.GetUserType("WishList.Models.ApplicationUser");
+
         [Fact(DisplayName = "Update Item Model @update-item-model")]
         public void UpdateItemModel()
         {
             var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Models" + Path.DirectorySeparatorChar + "Item.cs";
             Assert.True(File.Exists(filePath), @"`Item.cs` was not found in the `Models` folder, did you accidentally rename or remove it?");
 
-            var item = TestHelpers.GetUserType("WishList.Models.Item");
             Assert.True(item != null, "A `public` class `Item` was not found in the `WishList.Models` namespace, did you accidentally rename or remove it?");
 
             var userProperty = item.GetProperty("User");
@@ -30,10 +32,9 @@ namespace WishListTests
             var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Models" + Path.DirectorySeparatorChar + "ApplicationUser.cs";
             Assert.True(File.Exists(filePath), @"`ApplicationUser.cs` was not found in the `Models` folder, did you accidentally rename or remove it?");
 
-            var item = TestHelpers.GetUserType("WishList.Models.ApplicationUser");
-            Assert.True(item != null, "A `public` class `ApplicationUser` was not found in the `WishList.Models` namespace, did you accidentally rename or remove it?");
+            Assert.True(applicationUser != null, "A `public` class `ApplicationUser` was not found in the `WishList.Models` namespace, did you accidentally rename or remove it?");
 
-            var itemsProperty = item.GetProperty("Items");
+            var itemsProperty = applicationUser.GetProperty("Items");
             Assert.True(itemsProperty != null, "`ApplicationUser` does not appear to contain a `public` `virtual` `ICollection` with a type argument of `Item` property `Items`");
             Assert.True(itemsProperty.PropertyType == typeof(ICollection<Item>), "`ApplicationUser` contained a property `Items` but it was not of type `ICollection` with a type argument of `Item`");
             Assert.True(itemsProperty.GetMethod.IsVirtual, "`ApplicationUser` contained a property `Items` but it didn't use the `virtual` keyword.");
