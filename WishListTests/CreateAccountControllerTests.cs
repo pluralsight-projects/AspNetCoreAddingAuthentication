@@ -14,13 +14,13 @@ namespace WishListTests
 {
     public class CreateAccountControllerTests
     {
+        private Type accountController = ReflectionHelpers.GetUserType("WishList.Controllers.AccountController");
+
         [Fact(DisplayName = "Create AccountController @create-accountcontroller")]
         public void CreateAccountControllerTest()
         {
             var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Controllers" + Path.DirectorySeparatorChar + "AccountController.cs";
             Assert.True(File.Exists(filePath), "`AccountController.cs` was not found in the `Controllers` folder.");
-
-            var accountController = TestHelpers.GetUserType("WishList.Controllers.AccountController");
 
             Assert.True(accountController != null, "A `public` class `AccountController` was not found in the `WishList.Controllers` namespace.");
             Assert.True(accountController.BaseType == typeof(Controller), "`AccountController` didn't inherit the `Controller` class.");
@@ -33,7 +33,6 @@ namespace WishListTests
             var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Controllers" + Path.DirectorySeparatorChar + "AccountController.cs";
             Assert.True(File.Exists(filePath), "`AccountController.cs` was not found in the `Controllers` folder.");
 
-            var accountController = TestHelpers.GetUserType("WishList.Controllers.AccountController");
             Assert.True(accountController != null, "A `public` class `AccountController` was not found in the `WishList.Controllers` namespace.");
 
             var userManager = accountController.GetField("_userManager", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -53,7 +52,6 @@ namespace WishListTests
             var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Controllers" + Path.DirectorySeparatorChar + "AccountController.cs";
             Assert.True(File.Exists(filePath), "`AccountController.cs` was not found in the `Controllers` folder.");
 
-            var accountController = TestHelpers.GetUserType("WishList.Controllers.AccountController");
             Assert.True(accountController != null, "A `public` class `AccountController` was not found in the `WishList.Controllers` namespace.");
 
             var constructor = accountController.GetConstructors().FirstOrDefault();
@@ -64,7 +62,7 @@ namespace WishListTests
             var contextAccessor = new Mock<IHttpContextAccessor>();
             var claimsFactory = new Mock<IUserClaimsPrincipalFactory<ApplicationUser>>();
             var userManager = new UserManager<ApplicationUser>(userStore.Object, null, null, null, null, null, null, null, null);
-            var signInManager = new SignInManager<ApplicationUser>(userManager, contextAccessor.Object, claimsFactory.Object, null, null, null);
+            var signInManager = new SignInManager<ApplicationUser>(userManager, contextAccessor.Object, claimsFactory.Object, null, null, null, null);
             var controller = Activator.CreateInstance(accountController, new object[] { userManager, signInManager });
             Assert.True(accountController.GetField("_userManager", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(controller) == userManager, "`AccountController`'s constructor did not set the `_userManager` field based on the provided `UserManager` parameter.");
             Assert.True(accountController.GetField("_signInManager", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(controller) == signInManager, "`AccountController``s constructor did not set the `_signInManager` field based on the provided `SignInManager` parameter.");

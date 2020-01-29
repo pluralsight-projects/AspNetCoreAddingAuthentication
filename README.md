@@ -39,7 +39,8 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 		- Note : We created the model `ApplicationUser` that inherits `IdentityUser` for you! (This was done to allow us to more accurately test your code through out this project)
 		- [ ] Replace `ApplicationDbContext`'s inheritance of `DbContext` to `IdentityDbContext<ApplicationUser>` (you will need to add `using` directives for `Microsoft.AspNetCore.Identity.EntityFrameworkCore` and `using WishList.Models`)
 		- [ ] In `Startup.cs`'s `ConfigureServices` method call `AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();` on `services` (you will need to add `using` directives for `Microsoft.AspNetCore.Identity` and `using WishList.Models`)
-		- [ ] In `Startup.cs`'s `Configure` method Before `app.UseMvcWithDefaultRoute();` call `UseAuthentication` on `app`.
+		- [ ] In `Startup.cs`'s `Configure` method between the calls to `Routing` and `UseEndpoints` call `UseAuthentication` on `app`.
+        - [ ] - [ ] In `Startup.cs`'s `Configure` method between the calls to `UseAuthentication` and `UseEndpoints` call `UseAuthorization` on `app`.
 	- [ ] Create `AccountController`
 		- [ ] Create new controller `AccountController` in the `Controllers` folder
 			- The `AccountController` class should have the `Authorize` attribute (you will need a `using` directive for `Microsoft.AspNetCore.Authorization`)
