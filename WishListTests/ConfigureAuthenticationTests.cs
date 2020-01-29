@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using WishList.Data;
@@ -31,7 +31,7 @@ namespace WishListTests
             var pattern = @"services\s*?[.]AddIdentity\s*?[<]\s*?ApplicationUser\s*?,\s*?IdentityRole\s*?[>]\s*?[(]\s*?[)]\s*?[.]AddEntityFrameworkStores\s*?[<]\s*?ApplicationDbContext\s*?[>]\s*?[(]\s*?[)]\s*?[.]AddDefaultTokenProviders\s*?[(]\s*?[)]\s*?;";
             var rgx = new Regex(pattern);
 
-            Assert.True(rgx.IsMatch(file), "`Startup.ConfigureServices` didn't contain a call the `AddIdentity` on `services`. (you can copy this call from the task instructions)");
+            Assert.True(rgx.IsMatch(file), "`Startup.ConfigureServices` didn't contain calls for `AddIdentity` on `services`. (you can copy this call from the task instructions)");
         }
 
         [Fact(DisplayName = "Call UseAuthentication In ConfigureServices @call-useauthentication-in-configure")]

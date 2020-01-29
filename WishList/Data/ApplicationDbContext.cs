@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using WishList.Models;
 
 namespace WishList.Data

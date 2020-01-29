@@ -102,7 +102,7 @@ __Note:__ this isn't the only way to accomplish this, however; this is what the 
 		- [ ] Create an `HttpPost` action `Register` in the `AccountController` class
 			- This action should have the `HttpPost` attribute
 			- This action should have the `AllowAnonymous` attribute
-			- This action should accept a parameter of type `RegisterViewModel` (you will need to add a `using` directive for `WishList.Models.AccountViewModels`)
+			- This action should accept a parameter of type `RegisterViewModel`  (you will need to add a `using` directive for `WishList.Models.AccountViewModels`) 
 			- This action should return a `RedirectToAction` to `HomeController.Index`
 		- [ ] Update the `HttpPost` `Register` action to check if the `ModelState` is valid
 				- If not return the `Register` view with the model provided in the parameter as it's model

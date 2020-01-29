@@ -41,7 +41,7 @@ namespace WishListTests
         {
             var constructor = typeof(ItemController).GetConstructors().FirstOrDefault();
             var parameters = constructor.GetParameters();
-            Assert.True((parameters.Count() == 2 && parameters[0]?.ParameterType == typeof(ApplicationDbContext) && parameters[1]?.ParameterType == typeof(UserManager<ApplicationUser>)), "`ItemController` did not contain a constructor with two parameters, first of type `ApplicationDbContext`, second of type `UserManager<ApplicationUser>`.");
+            Assert.True((parameters.Count() == 2 && parameters[0]?.ParameterType == typeof(ApplicationDbContext) && parameters[1]?.ParameterType == typeof(UserManager<ApplicationUser>)), "`ItemController` did not contain a constructor with two parameters, first of type `ApplicationDbContext`, second of type `UserManager` with a type argument of `ApplicationUser`.");
 
             var userStore = new Mock<IUserStore<ApplicationUser>>();
             var userManager = new UserManager<ApplicationUser>(userStore.Object, null, null, null, null, null, null, null, null);
