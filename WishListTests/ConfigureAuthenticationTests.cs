@@ -46,10 +46,28 @@ namespace WishListTests
                 file = streamReader.ReadToEnd();
             }
 
-            var pattern = @"app.UseAuthentication[(]\s*?[)]\s*?;\s*?app.UseMvc";
+            var pattern = @"app.UseRouting[(]\s*?[)]\s*?;\s*?app.UseAuthentication[(]\s*?[)]\s*?;";
             var rgx = new Regex(pattern);
 
-            Assert.True(rgx.IsMatch(file), "`Startup.Configure` should call `UseAuthentication` before `UseMvcWithDefaultRoute`.");
+            Assert.True(rgx.IsMatch(file), "`Startup.Configure` should call `UseAuthentication` between `UseRouting` and `UseEndpoints`.");
+        }
+
+        [Fact(DisplayName = "Call UseAuthorization In ConfigureServices @call-useauthentication-in-configure")]
+        public void CallUseAuthorizationInConfigureTest()
+        {
+            var filePath = ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + ".." + Path.DirectorySeparatorChar + "WishList" + Path.DirectorySeparatorChar + "Startup.cs";
+            Assert.True(File.Exists(filePath), "`Startup.cs` was not found. Did you rename or delete it?");
+
+            string file;
+            using (var streamReader = new StreamReader(filePath))
+            {
+                file = streamReader.ReadToEnd();
+            }
+
+            var pattern = @"app.UseAuthentication[(]\s*?[)]\s*?;\s*?app.UseAuthorization";
+            var rgx = new Regex(pattern);
+
+            Assert.True(rgx.IsMatch(file), "`Startup.Configure` should call `UseAuthorization` between `UseAuthentication` and `UseEndpoints`.");
         }
     }
 }
