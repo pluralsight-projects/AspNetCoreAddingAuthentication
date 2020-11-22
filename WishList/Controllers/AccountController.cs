@@ -43,20 +43,13 @@ namespace WishList.Controllers
                 return View("Register", model);
             }
 
-            var user = new ApplicationUser
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                PasswordHash = model.Password
-            };
-
-            var result = _userManager.CreateAsync(user).Result;
+            var result = _userManager.CreateAsync(new ApplicationUser { Email = model.Email, UserName = model.Email}, model.Password).Result;
 
             if (!result.Succeeded)
             {
-                foreach (var item in result.Errors)
+                foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError("Password", item.Description);
+                    ModelState.AddModelError("Password", error.Description);
                 }
 
                 return View("Register", model);
