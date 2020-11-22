@@ -1,0 +1,19 @@
+﻿@model WishList.Models.AccountViewModels.LoginViewModel
+<h2>Log in</h2>
+<form asp-action="Login" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" />
+        <span asp-validation-for="Email"></span>
+    </div>
+    <div>
+        <label asp-for="Password"></label>
+        <input asp-for="Password" />
+        <span asp-validation-for="Password"></span>
+    </div>
+    <div>
+        <button type="submit">Log in</button>
+    </div>
+</form>
+<a asp-action="Register">Register new account</a>
